@@ -1,21 +1,110 @@
-// Stan gry, zapis, transakcje
-let S=null;
-const rnd=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
-const clamp=(v,a=0,b=100)=>Math.max(a,Math.min(b,v));
-const pln=n=>Math.round(n).toLocaleString('pl-PL')+' zł';
-function newCar(m,o={}){const y=o.year||rnd(m.y[0],m.y[1]);const age=2026-y;const km=o.km??clamp(age*rnd(9000,22000),5000,450000);
- const w=()=>clamp(100-km/6000-rnd(0,35));
- const c={id:S?S.nextId++:1,brand:m.b,model:m.m,year:y,km,fuel:m.fuel,hp:rnd(m.hp[0],m.hp[1]),color:COLORS[rnd(0,6)],
-  parts:{engine:w(),gearbox:w(),suspension:w(),brakes:w(),body:w(),interior:w()},listed:false,ask:0,boughtFor:0,daysOn:0};
- return Object.assign(c,o.parts?{parts:o.parts}:{});}
-function carCond(c){const p=c.parts;return Math.round((p.engine+p.gearbox+p.suspension+p.brakes)/4)}
-function carVis(c){return Math.round((c.parts.body+c.parts.interior)/2)}
-function carValue(c){const m=MODELS.find(x=>x.m===c.model)||{base:30000};const age=Math.max(0,2026-c.year);
- const v=m.base*Math.pow(.9,age)*(1-c.km/700000)*(.4+.6*(carCond(c)*.65+carVis(c)*.35)/100);return Math.max(1500,Math.round(v/50)*50)}
-function genMarket(n=6){S.market=[];for(let i=0;i<n;i++){const car=newCar(MODELS[rnd(0,MODELS.length-1)]);car.id=S.nextId++;
- car.price=Math.round(carValue(car)*(0.8+Math.random()*.3)/50)*50;S.market.push(car)}}
-function newState(){S={money:CFG.startMoney,day:1,rep:CFG.rep,slots:CFG.slots,bays:CFG.bays,nextId:1,cars:[],market:[],tx:[],repairs:[],income:0,expense:0,msg:[]};
- const c=newCar(MODELS[0],{year:2008,km:280000});c.fuel='diesel';c.boughtFor=0;c.id=S.nextId++;S.cars.push(c);genMarket();save();return S}
-function addTx(type,label,amt){S.money+=amt;if(amt>=0)S.income+=amt;else S.expense-=amt;S.tx.unshift({day:S.day,type,label,amt});S.tx=S.tx.slice(0,100)}
-function save(){try{localStorage.setItem(CFG.saveKey,JSON.stringify(S))}catch(e){}}
-function load(){try{const r=localStorage.getItem(CFG.saveKey);if(r){S=JSON.parse(r);return true}}catch(e){}return false}
+// Losowanie pomocnicze
+const rnd = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
+const COLORS = ['#c0392b','#2980b9','#27ae60','#bdc3c7','#2c3e50','#f39c12','#8e44ad'];
+
+// Generator pojedynczego samochodu z indywidualnymi parametrami
+function generateCar() {
+  // Losuj model i generację
+  const model = MODELS[rnd(0, MODELS.length - 1)];
+  const gen = model.gens[rnd(0, model.gens.length - 1)];
+  // Rok produkcji w obrębie generacji
+  const year = rnd(gen.years[0], gen.years[1]);
+  // Silnik z generatora
+  const engine = gen.engines[rnd(0, gen.engines.length - 1)];
+  // Przebieg zależny od wieku (średnio 15 000 km/rok)
+  const age = 2026 - year;
+  const mileage = clamp(rnd(age * 8000, age * 20000), 5000, 450000);
+  // Stan techniczny i wizualny – losowy z przedziału od 70% do 95%
+  const conditionTechnical = rnd(70, 95);
+  const conditionVisual = rnd(70, 95);
+  // Wybierz kolor z listy
+  const color = COLORS[rnd(0, COLORS.length - 1)];
+  // Losowe wyposażenie
+  const equipCount = rnd(3, 7);
+  const equipment = [];
+  while (equipment.length < equipCount) {
+    const item = EQUIPMENTS[rnd(0, EQUIPMENTS.length - 1)];
+    if (!equipment.includes(item)) equipment.push(item);
+  }
+  // Liczba poprzednich właścicieli
+  const previousOwners = rnd(1, 3);
+  // Identyfikator
+  const id = `${model.b}_${model.m}_${gen.code}_${year}_${Math.floor(mileage / 1000)}`;
+
+  return {
+    id,
+    brand: model.b,
+    model: model.m,
+    generation: gen.code,
+    year,
+    mileage,
+    engineName: engine.name,
+    engineType: engine.type,
+    enginePower: engine.power,
+    engineDisplacement: engine.displacement,
+    fuel: gen.fuel,
+    color,
+    conditionTechnical,
+    conditionVisual,
+    equipment,
+    previousOwners,
+    pricePaid: 0,
+  };
+}
+
+// Wyliczenie wartości rynkowej i proponowanych cen
+function calculatePrices(car) {
+  // Znajdź model i generację bazową cenę
+  const model = MODELS.find(m => m.b === car.brand && m.m === car.model);
+  if (!model) return null;
+  const gen = model.gens.find(g => g.code === car.generation);
+  if (!gen) return null;
+
+  let basePrice = gen.basePrice;
+
+  // Cena bazowa maleje z wiekiem - 7% na rok, minimum 50% wartości
+  const age = 2026 - car.year;
+  basePrice *= Math.max(0.5, 1 - 0.07 * age);
+
+  // Cena maleje wraz z przebiegiem, minimalnie do 60%
+  basePrice *= Math.max(0.6, 1 - car.mileage / 300000);
+
+  // Moc silnika podbija cenę - do +30%
+  const enginePowerRange = gen.engines.reduce((acc, e) => {
+    acc.min = Math.min(acc.min, e.power);
+    acc.max = Math.max(acc.max, e.power);
+    return acc;
+  }, { min: Infinity, max: -Infinity });
+
+  if (enginePowerRange.max > enginePowerRange.min) {
+    const powerFactor = (car.enginePower - enginePowerRange.min) / (enginePowerRange.max - enginePowerRange.min);
+    basePrice *= 1 + 0.3 * powerFactor;
+  }
+
+  // Wyposażenie podbija cenę o 1.5% za element
+  basePrice *= 1 + 0.015 * car.equipment.length;
+
+  // Stan techniczny i wizualny
+  const avgCondition = ((car.conditionTechnical + car.conditionVisual) / 2) / 100;
+  basePrice *= avgCondition;
+
+  // Zaokrąglenie do 100 PLN
+  const marketValue = Math.round(basePrice / 100) * 100;
+
+  // Cena zakupu około 65-75% wartości rynkowej
+  const purchasePrice = Math.round(marketValue * (0.65 + Math.random() * 0.1));
+
+  // Sugerowana cena sprzedaży +15% marży
+  const suggestedPrice = Math.round(marketValue * 1.15);
+
+  // Minimalna opłacalna cena (85% wartości rynkowej)
+  const minSellingPrice = Math.round(marketValue * 0.85);
+
+  return {
+    marketValue,
+    purchasePrice,
+    suggestedPrice,
+    minSellingPrice,
+  };
+}
