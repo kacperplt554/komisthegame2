@@ -1,5 +1,5 @@
 function carDetails(c) {
-  const prices = calculatePrices(c) || {};
+  const prices = calculateCarPrices(c) || {};
   return `<div class="card">
     <div class="row" style="align-items:flex-start">
       <div>

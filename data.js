@@ -1,54 +1,79 @@
-// Dane statyczne gry – rozszerzone o konfiguracje silników i wyposażenia
-const MODELS = [
+const CAR_DATABASE = [
   {
-    b: 'BMW',
-    m: 'Seria 3',
-    gens: [
+    brand: "BMW",
+    models: [
       {
-        code: 'E90',
-        years: [2005, 2011],
-        engines: [
-          { name: '318d', type: 'diesel', power: 143, displacement: 2.0 },
-          { name: '320d', type: 'diesel', power: 163, displacement: 2.0 },
-          { name: '320d', type: 'diesel', power: 184, displacement: 2.0 },
-          { name: '330d', type: 'diesel', power: 231, displacement: 3.0 }
-        ],
-        basePrice: 42000,
-        fuel: 'diesel'
-      },
-      {
-        code: 'F30',
-        years: [2012, 2019],
-        engines: [
-          { name: '316d', type: 'diesel', power: 116, displacement: 2.0 },
-          { name: '320d', type: 'diesel', power: 190, displacement: 2.0 },
-          { name: '330d', type: 'diesel', power: 258, displacement: 3.0 }
-        ],
-        basePrice: 48000,
-        fuel: 'diesel'
+        name: "Seria 3",
+        generations: [
+          {
+            code: "E90",
+            years: [2005, 2011],
+            engines: [
+              { name: "318d", power: 143, displacement: 2.0, fuel: "Diesel", gearbox: "manual", drive: "RWD" },
+              { name: "320d", power: 163, displacement: 2.0, fuel: "Diesel", gearbox: "manual", drive: "RWD" },
+              { name: "320d", power: 184, displacement: 2.0, fuel: "Diesel", gearbox: "auto", drive: "RWD" },
+              { name: "330d", power: 231, displacement: 3.0, fuel: "Diesel", gearbox: "auto", drive: "RWD" }
+            ],
+            basePrice: 42000,
+            equipmentOptions: ["Standard", "M Sport", "Luxury"]
+          },
+          {
+            code: "F30",
+            years: [2012, 2019],
+            engines: [
+              { name: "316d", power: 116, displacement: 2.0, fuel: "Diesel", gearbox: "manual", drive: "RWD" },
+              { name: "320d", power: 190, displacement: 2.0, fuel: "Diesel", gearbox: "auto", drive: "RWD" },
+              { name: "330d", power: 258, displacement: 3.0, fuel: "Diesel", gearbox: "auto", drive: "RWD" }
+            ],
+            basePrice: 48000,
+            equipmentOptions: ["Standard", "M Sport", "Luxury"]
+          }
+        ]
       }
     ]
   },
   {
-    b: 'Audi',
-    m: 'A4',
-    gens: [
+    brand: "Audi",
+    models: [
       {
-        code: 'B7',
-        years: [2004, 2008],
-        engines: [
-          { name: '2.0 TDI', type: 'diesel', power: 140, displacement: 2.0 },
-          { name: '3.0 TDI V6', type: 'diesel', power: 240, displacement: 3.0 }
-        ],
-        basePrice: 35000,
-        fuel: 'diesel'
+        name: "A4",
+        generations: [
+          {
+            code: "B7",
+            years: [2004, 2008],
+            engines: [
+              { name: "2.0 TDI", power: 140, displacement: 2.0, fuel: "Diesel", gearbox: "manual", drive: "FWD" },
+              { name: "3.0 TDI V6", power: 240, displacement: 3.0, fuel: "Diesel", gearbox: "auto", drive: "AWD" }
+            ],
+            basePrice: 35000,
+            equipmentOptions: ["Standard", "S line"]
+          }
+        ]
       }
     ]
   },
-  // Dodaj kolejne marki, modele i generacje wg potrzeb
+  {
+    brand: "Volkswagen",
+    models: [
+      {
+        name: "Golf",
+        generations: [
+          {
+            code: "V",
+            years: [2003, 2008],
+            engines: [
+              { name: "1.9 TDI", power: 105, displacement: 1.9, fuel: "Diesel", gearbox: "manual", drive: "FWD" },
+              { name: "1.4 TSI", power: 125, displacement: 1.4, fuel: "Petrol", gearbox: "manual", drive: "FWD" }
+            ],
+            basePrice: 25000,
+            equipmentOptions: ["Standard", "Sport"]
+          }
+        ]
+      }
+    ]
+  }
 ];
 
-// Lista możliwego wyposażenia (możesz rozszerzyć)
 const EQUIPMENTS = [
   "Skórzana tapicerka",
   "Alcantara",
